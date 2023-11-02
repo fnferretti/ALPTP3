@@ -1,0 +1,19 @@
+def uno = suc 0
+-- pred 0 = 0
+-- pred (Suc n) = n
+def pred = \n:Nat. R 0 (\x:Nat y:Nat. y) n
+
+
+-- Ack :: Nat -> Nat -> Nat
+-- Ack 0 n = suc n
+-- Ack m 0 = Ack (pred m) uno
+-- Ack m n = Ack (pred m) (Ack m (pred n))
+-- Ack es una función que toma función: f :: Nat -> Nat
+-- y devuelve un Nat. Es decir: Ack :: (Nat -> Nat) -> Nat
+
+
+def id = \x:Nat. x
+def succ = \x:Nat. suc x
+def comp = \f:Nat->Nat. \g:Nat->Nat. \x:Nat. f (g x)
+def iter = \f:Nat->Nat. \n:Nat. R id (\fb:Nat->Nat. \y:Nat. comp f y) n
+def Ack = \m:Nat. R succ (\fb:Nat->Nat. \y:Nat. (\n:Nat. iter fb n) (fb uno)) m
