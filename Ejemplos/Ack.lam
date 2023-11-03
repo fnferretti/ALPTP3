@@ -1,19 +1,64 @@
-def uno = suc 0
+-- Nats:
+def zero  = 0
+def one   = suc zero
+def two   = suc one
+def three = suc two
+def four  = suc three
+
+
+--Test-----------------------------------------------------------------------------
 -- pred 0 = 0
 -- pred (Suc n) = n
-def pred = \n:Nat. R 0 (\x:Nat y:Nat. y) n
+def pred = \x:Nat. R 0 (\r:Nat. \v:Nat. v) x
 
+-- add x 0 = x
+-- add x (suc y) = suc (add x y)
+def add = \x:Nat. \y:Nat. R x (\r:Nat. \v:Nat. suc r) y
 
+-- sub x 0 = x
+-- sub x (suc y) = pred (sub x y)
+def sub = \x:Nat. \y:Nat. R x (\r:Nat. \v:Nat. pred r) y
+
+--mult x 0 = 0
+--mult x (suc y) =  add x (mult x y)
+def mult = \x:Nat. \y:Nat. R 0 (\r:Nat. \v:Nat. add x r) y
+
+--pow x 0 = 1
+--pow x (suc y) = mult x (pow x y)
+def pow = \x:Nat. \y:Nat. R one (\r:Nat. \v:Nat. mult x r) y
+
+--fact 0 = 1
+--fact (suc x) = mult (suc x) (fact x)
+def fact = \x:Nat. R one (\r:Nat. \v:Nat. mult (suc v) r) x
+
+--ej6------------------------------------------------------------------------------
 -- Ack :: Nat -> Nat -> Nat
 -- Ack 0 n = suc n
--- Ack m 0 = Ack (pred m) uno
+-- Ack m 0 = Ack (pred m) one
 -- Ack m n = Ack (pred m) (Ack m (pred n))
--- Ack es una función que toma función: f :: Nat -> Nat
--- y devuelve un Nat. Es decir: Ack :: (Nat -> Nat) -> Nat
 
+def iter = \f:Nat->Nat. \n:Nat. R (f one) (\r:Nat. \v:Nat. f r) n
+def ack = \m:Nat. R succ (\r:Nat->Nat. \v:Nat. iter r) m
 
-def id = \x:Nat. x
-def succ = \x:Nat. suc x
-def comp = \f:Nat->Nat. \g:Nat->Nat. \x:Nat. f (g x)
-def iter = \f:Nat->Nat. \n:Nat. R id (\fb:Nat->Nat. \y:Nat. comp f y) n
-def Ack = \m:Nat. R succ (\fb:Nat->Nat. \y:Nat. (\n:Nat. iter fb n) (fb uno)) m
+--AckTest--------------------------------------------------------------------------
+-- def taa = Ack zero  zero
+-- def tab = Ack zero  one
+-- def tac = Ack zero  two
+-- def tad = Ack zero  three
+-- def tae = Ack zero  four
+-- def tba = Ack one   zero
+-- def tbb = Ack one   one
+-- def tbc = Ack one   two
+-- def tbd = Ack one   three
+-- def tbe = Ack one   four
+-- def tca = Ack two   zero
+-- def tcb = Ack two   one
+-- def tcc = Ack two   two
+-- def tcd = Ack two   three
+-- def tce = Ack two   four
+-- def tda = Ack three zero
+-- def tdb = Ack three one
+-- def tdc = Ack three two
+-- def tdd = Ack three three
+-- def tde = Ack three four
+-- def tea = Ack four  zero

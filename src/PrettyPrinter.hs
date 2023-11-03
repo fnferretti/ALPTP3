@@ -28,7 +28,7 @@ pp _  _  (Free  (Global s)) = text s
 
 pp ii vs (i :@: c         ) = sep
   [ parensIf (isLam i) (pp ii vs i)
-  , nest 1 (parensIf (not isValue) (pp ii vs c))
+  , nest 1 (parensIf (isNoTerminal c) (pp ii vs c))
   ]
 pp ii vs (Lam t c) =
   text "\\"
@@ -42,8 +42,8 @@ pp ii vs (Lam t c) =
 pp ii vs (Let t1 t2) = sep 
   [ text "let"
   , text (vs !! ii)
-  , text "="]
-  , parensIf (not isValue) (pp ii vs t1)
+  , text "="
+  , parensIf (isNoTerminal t1) (pp ii vs t1)
   , text "in"
   , pp (ii + 1) vs t2
   ]
@@ -54,34 +54,27 @@ pp ii vs (Pair t1 t2) = parens $ sep [ pp ii vs t1
                                      , text ","
                                      , pp ii vs t2
                                      ]
-pp ii vs (Fst t) = text "fst " <> parensIf (not isValue) (pp ii vs t)
-pp ii vs (Snd t) = text "snd " <> parensIf (not isValue) (pp ii vs t)
+pp ii vs (Fst t) = text "fst " <> parensIf (isNoTerminal t) (pp ii vs t)
+pp ii vs (Snd t) = text "snd " <> parensIf (isNoTerminal t) (pp ii vs t)
 --ej5
 pp ii vs Zero    = text "0"
-pp ii vs (Suc t) = text "suc " <> parensIf (not isValue) (pp ii vs t)
-pp ii vs (Rec t1 t2 t3) = sep [ "R"
-                              , parensIf (not isValue) pp ii vs t1
-                              , parensIf (not isValue) pp ii vs t2
-                              , parensIf (not isValue) pp ii vs t3
+pp ii vs (Suc t) = text "suc " <> parensIf (isNoTerminal t) (pp ii vs t)
+pp ii vs (Rec t1 t2 t3) = sep [ text "R"
+                              , parensIf (isNoTerminal t1) (pp ii vs t1)
+                              , parensIf (isNoTerminal t2) (pp ii vs t2)
+                              , parensIf (isNoTerminal t3) (pp ii vs t3)
                               ]
 
 isLam :: Term -> Bool
 isLam (Lam _ _) = True
 isLam _         = False
 
-isApp :: Term -> Bool
-isApp (_ :@: _) = True
-isApp _         = False
-
-isLet :: Term -> Bool
-isLet (Let _ _) = True
-isLet _         = False
-
-isValue :: Term -> Bool
-isValue (varT _) | varT == Free || varT == Bound = True
-isValue (Pair _ _) = True
-isValue t | t == Unit || t == Zero = True
-isValue t = False
+isNoTerminal :: Term -> Bool
+isNoTerminal (Free _) = False
+isNoTerminal (Bound _) = False
+isNoTerminal (Pair _ _) = False
+isNoTerminal t | t == Unit || t == Zero = False
+isNoTerminal t = True
 
 -- pretty-printer de tipos
 printType :: Type -> Doc
@@ -96,14 +89,16 @@ printType (PairT t1 t2) = parens $ sep [ printType t1
                                        , printType t2
                                        ]
 --ej5
-printType (NatT t) = text "Nat " <> printType t
+printType NatT = text "Nat"
 
 isFun :: Type -> Bool
 isFun (FunT _ _) = True
 isFun _          = False
 
--- Función para quitar las variables globales de 
--- la lista de posibles variables. 
+-- Dado un término `t`, devuelve una lista con los nombres de las variables globales
+-- que aparecen en `t`.
+-- Utilizada en printTerm para quitar las variables globales
+-- de `t` de la lista de posibles nombres para variables.
 fv :: Term -> [String]
 fv (Bound _         ) = []
 fv (Free  (Global n)) = [n]

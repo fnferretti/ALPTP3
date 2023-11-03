@@ -103,13 +103,13 @@ eval e (Rec t u v)    =
 quote :: Value -> Term
 quote (VLam t      f) = Lam t f
 quote VUnit           = Unit
-quote (VPair t1   t2) = Pair t1 t2
+quote (VPair t1   t2) = Pair (quote t1) (quote t2)
 quote (VNum    NZero) = Zero
 quote (VNum (NSuc n)) = Suc $ quotenv n 
 
-quotenv :: NumVar -> Term
+quotenv :: NumVal -> Term
 quotenv NZero    = Zero
-quotenv (NSuc n) = Suc $ quote' n
+quotenv (NSuc n) = Suc $ quotenv n
 
 ----------------------
 --- type checker
@@ -166,7 +166,7 @@ infer' c e (Let t u) = infer' c e t >>= \tt -> infer' (tt:c) e u
 --ej2
 infer' c e Unit = ret UnitT
 --ej4
-infer' c e (Pair t u) = (infer' c e t >>= \tt -> infer' c e u)
+infer' c e (Pair t u) = infer' c e t >>= \tt -> infer' c e u
                         >>= \tu -> ret $ PairT tt tu
 infer' c e (Fst t)    = infer' c e t >>= \tt -> 
   case tt of
@@ -182,11 +182,11 @@ infer' c e (Suc n)     = infer' c e n >>= \tn ->
   case tn of
     NatT  -> ret NatT
     termT -> matchError NatT termT
-infer' c e (Rec t u v) = (infer' c e t >>= \tt -> infer' c e u) 
-                         >>= \tu -> infer' c e v >>= \tv -> 
-  if tu \= (FuntT tt (FuntT NatT tt) 
-     then matchError (FuntT tt (FuntT NatT tt)) tu
-  else if tv \= NatT 
-     then matchError NatT tv
+infer' c e (Rec t u v) = infer' c e t >>= \tt -> infer' c e u
+                         >>= \tu -> infer' c e v >>= \tv ->
+  if tu /= (FunT tt (FunT NatT tt))
+  then matchError (FunT tt (FunT NatT tt)) tu
+  else if tv /= NatT
+  then matchError NatT tv
   else ret tt
 ----------------------------------
